@@ -1,5 +1,5 @@
 # bffl
-Bit Fields For Lumberjacks
+## Bit Fields For Lumberjacks
 
 ![lumberjack](images/bffl800.png)
 
