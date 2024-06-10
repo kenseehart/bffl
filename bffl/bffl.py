@@ -1,9 +1,9 @@
 """
-bffl.core
+bffl
 
 A framework for bit fields
 
-Copyright 2020-2022, Ken Seehart
+Copyright 2020-2024, Ken Seehart
 MIT License
 https://github.com/kenseehart/bffl
 """
