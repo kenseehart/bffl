@@ -36,10 +36,11 @@ def test_hex_bin():
     assert x.bin_ == '00000000000000000000000000000000111'
 
 def test_struct():
-    eric = struct('eric', [
-        ("a", uint(3)),
-        ("b", uint(4)),
-    ])
+    with pytest.warns(DeprecationWarning, match="Direct call notation is deprecated"):
+        eric = struct('eric', [
+            ("a", uint(3)),  # deprecated
+            ("b", uint[4]),
+        ])
 
     idle = struct('idle', [
         ('f', eric[10]),  # array of 10 eric elements
@@ -47,7 +48,7 @@ def test_struct():
     ])
 
     foobar = struct('foobar', [
-        ('a', uint(3, enum_={"alpha": 0, "beta": 1, "gamma": 2})),  # 3 bit integer with enum
+        ('a', uint[3, {"alpha": 0, "beta": 1, "gamma": 2}]),  # 3 bit integer with enum
         ('b', sint(4)),  # 4 bit integer
         ('bars', idle[5]),  # array of 5 bars
     ])
@@ -70,8 +71,8 @@ def test_struct():
 
 def test_class():
     class eric(metaclass=metastruct):
-        a: uint(3)
-        b: uint(4)
+        a: uint[3]
+        b: uint[4]
 
     assert repr(eric) == "struct('eric', [('a', uint(3)), ('b', uint(4))])"
     print (eric.classdef_)
@@ -90,8 +91,8 @@ def test_decimal():
 
 def test_expr():
     class seven_type(metaclass=metastruct):
-        a: uint(3)
-        b: uint(4)
+        a: uint[3]
+        b: uint[4]
 
     seven = seven_type()
 
@@ -124,17 +125,17 @@ def test_svreg():
 
 def test_readme_parrot():
     class parrot_struct(metaclass=metastruct):
-        status: uint(2, {'dead': 0, 'pining': 1, 'resting': 2})
-        plumage_rgb: uint(5)[3]
+        status: uint[2, {'dead': 0, 'pining': 1, 'resting': 2}]
+        plumage_rgb: uint[5][3]
 
-    death_enum = uint(3, {
+    death_enum = uint[3, {
         'vorpal_bunny': 0,
         'liverectomy': 1,
         'ni': 2,
         'question': 3,
         'mint': 4,
         'not dead yet': 5,
-    })
+    }]
 
     class knight_struct(metaclass=metastruct):
         name: utf8(20)

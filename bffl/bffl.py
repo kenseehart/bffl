@@ -15,6 +15,7 @@ from pprint import pprint as std_pprint
 import json
 import re
 from random import randint, seed, choice
+from warnings import warn
 # pyright: reportInvalidTypeForm=false
 
 from bffl.expressions import CSTNode, cst_expr, cst_source_code, cst_uint, is_identifier
@@ -346,12 +347,25 @@ class btype(type):
 class uint(btype):
     '''unsigned integer with optional enum'''
 
-    def __init__(self, size:int, enum_:dict=None, name=None):
+    def __init__(self, size:int, enum_:dict=None, name=None, _bracket_init=False):
         super().__init__(name)
         self.size_ = size
         self.repr_ = f"{type(self).__name__}({size})"
         self.enum_ = enum_ or {}
         self.renum_ = {v:k for k,v in self.enum_.items()}
+
+        # Deprecation warning for direct calls
+        if not _bracket_init:
+            warn(
+                f"Direct call notation is deprecated. Use {self.__class__.__name__}[...] instead of {self.__class__.__name__}(...).",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
+    @classmethod
+    def __class_getitem__(cls, *args):
+        instance = cls(*args, _bracket_init=True)
+        return instance
 
     class mixin_field_(field):
         '''inherited by bound field instance'''
