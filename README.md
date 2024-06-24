@@ -6,57 +6,41 @@
 
 `bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations. Your protocol is expressed concisely using compositions of ints, structs, arrays, and user-defined types.
 
-## Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
+### Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
 
-| Tool   | Model         | Primary Purpose                                       | Implementation  |
-|--------|---------------|-------------------------------------------------------|-----------------|
-| ctypes | C/C++ types   | Interface with C/C++ code, model C/C++ datatypes      | Python, C++     |
-| bffl   | Bit fields    | Model arbitrary bit-aligned datatypes and interfaces  | Python          |
+While `bffl` and `ctypes` both handle binary data in Python, their primary purposes differ. `ctypes` maps to C structs, whereas `bffl` maps to bit vectors.
 
-* Use `ctypes` for interfacing with C/C++.
-* Use `bffl` for full control over bit-aligned binary protocols.
-* Use both for combined functionality.
+| **Tool** | **Model** | **Primary Purpose** | **Implementation** |
+|----------|-----------|---------------------|--------------------|
+| `ctypes` | C/C++ types | Interface with C/C++ code, model C/C++ datatypes | Python, C++ |
+| `bffl`   | Bit fields | Model arbitrary bit-aligned datatypes and interfaces | Python |
 
-## Comparison to C++ Bitfields
+#### Use Cases:
+- **`ctypes`**:
+  - Interfacing with C/C++ libraries.
+  - System-level programming.
+  - Handling performance-critical applications using C/C++.
+  - Optimal for compute-bound tasks where hardware-specific optimizations are beneficial.
 
-C++ bitfields optimize for performance and byte alignment, often disregarding explicit bit control. `bffl` offers full control over bit allocation, making it ideal for protocol implementations and verilog.
+- **`bffl`**:
+  - Protocol implementation requiring precise bit-level control.
+  - Verilog interface testing.
+  - Custom binary data formats with exact bit alignment.
+  - Consistent behavior across different hardware architectures.
+  - Ideal for IO-bound tasks and memory transfers, where exact bit-level management is crucial.
 
-```plaintext
-// In C++, struct size is implicitly padded:
-struct Example {
-    uint8_t a : 5;
-    uint8_t b : 13;
-};  // Size may not be 18 bits due to padding
+### Comparison to Bitfields in C++
 
-// In bffl:
-class Example(metaclass=metastruct):
-    a: uint(5)
-    b: uint(13)
-```
+C++ typically controls bit allocation for optimal performance, respecting byte or word boundaries, which can hinder precise bit-level control. `bffl` offers explicit control over bit allocation, with no implicit padding. This is crucial for protocol implementations and verilog interfaces, where predictable bitwise allocation is required.
 
-In `bffl`, structs are exactly the sum of their members' sizes, with no implicit padding. An array of 7 7-bit integers occupies precisely 49 bits (`uint(7)[7].size_ == 49`).
+In `bffl`, a struct with a 5-bit integer and a 13-bit integer is exactly 18 bits, and an array of 5 such structs is 90 bits. Python's `int` type supports unbounded bit fields, allowing flexible manipulation without byte misalignment issues.
 
-## Ease of Use
+### Ease of Use
 
 ```python
-raw_data_source = sequence_of_integers_from_somewhere()
-
 class parrot_struct(metaclass=metastruct):
     status: uint(2, {'dead': 0, 'pining': 1, 'resting': 2})
     plumage_rgb: uint(5)[3]
-
-death_enum = uint(3, {
-    'vorpal_bunny': 0,
-    'liverectomy': 1,
-    'ni': 2,
-    'question': 3,
-    'mint': 4,
-    'not_dead_yet': 5,
-})
-
-class knight_struct(metaclass=metastruct):
-    name: utf8(20)
-    cause_of_death: death_enum
 
 class quest_struct(metaclass=metastruct):
     quest: uint(3, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3, 'gourd': 4})
@@ -72,26 +56,27 @@ def get_dead_parrot_quests(raw_data_source: Sequence[int]) -> Iterator[str]:
         if status == 'dead':
             yield data.json_
 
-for jstr in get_dead_parrot_quests(raw_data_source):
+for jstr in get_dead_parrot_quests(sequence_of_integers_from_somewhere()):
     print(jstr)
 ```
 
-## Interoperability
+### Interoperability
 
-Fields have read/write properties exposing data:
-| Attribute | Description                              |
-|-----------|------------------------------------------|
-| `n_`      | Raw bits as an int (unbounded size)      |
-| `v_`      | Data value as int, float, str, list, dict|
-| `json_`   | Data value as a JSON string              |
+Fields in `bffl` have read/write properties exposing data:
 
-## Performance
+| Attribute | Description |
+|-----------|-------------|
+| `n_`      | Raw bits as an int (unbounded size) |
+| `v_`      | Data value as basic types (int, float, str, list, dict) |
+| `json_`   | Data value as a JSON string |
 
-Performance is achieved by symbolic processing during interface allocation, reducing runtime overhead. A bound field computation typically involves a `shift-and` operation.
+### Performance
+
+`bffl` achieves performance by performing symbolic processing during interface allocation, reducing runtime overhead. Bound field computations typically involve simple `shift-and` operations.
 
 ```python
 class MyRegister(metaclass=metastruct):
-    rtype: uint(2, enum_={'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
+    rtype: uint(2, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
     stuff: uint(3)
     junk: uint(1)
 
@@ -104,20 +89,37 @@ class MyProtocol(metaclass=metastruct):
 def look_for_fives(datastream: Sequence[int]):
     buffer = MyProtocol()
     bstuff = buffer.b.stuff
-
     for n in datastream:
         buffer.n_ = n
         if bstuff == 5:
             handle_5()
 ```
 
-## Trailing Underscore Convention
+### Trailing Underscore Convention
 
-Non-field attributes use a trailing underscore, allowing full use of the field namespace.
+Fields in `bffl` are marked with a trailing underscore to distinguish them from non-field attributes. This allows full use of the field namespace.
 
-## System Verilog Support
+### Metatypes, Field Types, and Fields
 
-`bffl` uses Python semantics for indexing and slicing but includes `svreg` for System Verilog slice semantics.
+`bffl` uses metatypes to define complex datatypes. For example, `uint(5)` defines a 5-bit unsigned integer field type. Fields are instantiated and assigned values via the `v_` or `n_` attributes.
+
+### Struct Syntax
+
+#### Inline Syntax
+```python
+struct_name = struct('struct_name', [('field_name', field_type), ...])
+```
+
+#### Class Syntax
+```python
+class struct_name(metaclass=metastruct):
+    field_name: field_type
+    ...
+```
+
+### System Verilog Support
+
+`bffl` includes an `svreg` type for System Verilog slice semantics.
 
 ```python
 r = svreg(28)(0xabadbee)
