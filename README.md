@@ -6,6 +6,22 @@
 
 `bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations. Your protocol is expressed concisely using compositions of ints, structs, arrays, and user-defined types.
 
+### Quickstart
+
+#### Standard installation:
+
+``` bash
+pip install bffl
+```
+
+#### Development installation (if you want to work on bffl):
+
+``` bash
+git clone git@github.com:kenseehart/bffl.git
+pip install -e bffl
+```
+
+
 ### Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
 
 While `bffl` and `ctypes` both handle binary data in Python, their primary purposes differ. `ctypes` maps to C structs, whereas `bffl` maps to bit vectors.
@@ -21,6 +37,7 @@ While `bffl` and `ctypes` both handle binary data in Python, their primary purpo
   - System-level programming.
   - Handling performance-critical applications using C/C++.
   - Optimal for compute-bound tasks where hardware-specific optimizations are beneficial.
+  - Memory mapping optimized your hardware
 
 - **`bffl`**:
   - Protocol implementation requiring precise bit-level control.
@@ -28,6 +45,7 @@ While `bffl` and `ctypes` both handle binary data in Python, their primary purpo
   - Custom binary data formats with exact bit alignment.
   - Consistent behavior across different hardware architectures.
   - Ideal for IO-bound tasks and memory transfers, where exact bit-level management is crucial.
+  - Memory mapping is portable (independent of hardware architecture)
 
 ### Comparison to Bitfields in C++
 
