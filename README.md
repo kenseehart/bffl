@@ -18,7 +18,8 @@ pip install bffl
 
 ``` bash
 git clone git@github.com:kenseehart/bffl.git
-pip install -e bffl
+cd bffl
+pip install -e .
 ```
 
 
