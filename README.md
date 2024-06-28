@@ -135,14 +135,17 @@ struct_name = struct('struct_name', [('field_name', field_type), ...])
 
 #### Class Syntax
 ```python
-class struct_name(metaclass=metastruct):
+@struct
+class struct_name:
     field_name: field_type
     ...
 ```
 
-### System Verilog Support
+### System Verilog Semantics (optional)
 
-`bffl` includes an `svreg` type for System Verilog slice semantics.
+Normally, `bffl` uses pythonic index semantics. However, if you are working heavily with System Verilog, you might find it more intuitive to use System Verilog slice semantics.vaa
+
+If a field is of type `svreg`, ranges are `[high:low]` and are inclusive of both high and low indexes.
 
 ```python
 r = svreg(28)(0xabadbee)
