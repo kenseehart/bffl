@@ -57,14 +57,16 @@ In `bffl`, a struct with a 5-bit integer and a 13-bit integer is exactly 18 bits
 ### Ease of Use
 
 ```python
-class parrot_struct(metaclass=metastruct):
+@struct
+class parrot_struct:
     status: uint(2, {'dead': 0, 'pining': 1, 'resting': 2})
     plumage_rgb: uint(5)[3]
 
-class quest_struct(metaclass=metastruct):
+@struct
+class quest_struct:
     quest: uint(3, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3, 'gourd': 4})
     knights: knight_struct[3]
-    holy: uint(1)
+    holy: uint[1]
     parrot: parrot_struct
 
 def get_dead_parrot_quests(raw_data_source: Sequence[int]) -> Iterator[str]:
@@ -94,12 +96,14 @@ Fields in `bffl` have read/write properties exposing data:
 `bffl` achieves performance by performing symbolic processing during interface allocation, reducing runtime overhead. Bound field computations typically involve simple `shift-and` operations.
 
 ```python
-class MyRegister(metaclass=metastruct):
+@struct
+class MyRegister:
     rtype: uint(2, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
     stuff: uint(3)
     junk: uint(1)
 
-class MyProtocol(metaclass=metastruct):
+@struct
+class MyProtocol:
     header: uint(5)
     a: MyRegister
     b: MyRegister

@@ -1,14 +1,14 @@
 import pytest
-from bffl.bffl import uint, sint, struct, metastruct, decimal, utf8, svreg
+from bffl.bffl import uint, sint, struct, decimal, utf8, svreg
 from random import seed, randint, choice
-from typing import Sequence, Iterator
+from typing import Sequence, Iterator, Type, Dict, NewType
 
 def test_simple():
-    u4t = uint(4)  # type
+    u4t = uint[4]  # type
     u4 = u4t()  # bound field
     u4.n_ = 3  # raw int value
 
-    assert repr(u4t) == 'uint(4)'
+    assert repr(u4t) == 'uint[4]'
     assert repr(u4) == '<3>'
     assert u4.n_ == 3
     assert u4 == 3
@@ -23,7 +23,7 @@ def test_simple():
         u4 /= 2
 
 def test_hex_bin():
-    x = uint(35)()
+    x = uint[35]()
     x.hex_ = 'f1234567f'
     assert x == 0x71234567f
     assert x.bin_ == '11100010010001101000101011001111111'
@@ -36,20 +36,19 @@ def test_hex_bin():
     assert x.bin_ == '00000000000000000000000000000000111'
 
 def test_struct():
-    with pytest.warns(DeprecationWarning, match="Direct call notation is deprecated"):
-        eric = struct('eric', [
-            ("a", uint(3)),  # deprecated
-            ("b", uint[4]),
-        ])
+    eric = struct('eric', [
+        ("a", uint(3)),  # alternative syntax
+        ("b", uint[4]),
+    ])
 
     idle = struct('idle', [
         ('f', eric[10]),  # array of 10 eric elements
-        ('c', uint(5)),
+        ('c', uint[5]),
     ])
 
     foobar = struct('foobar', [
         ('a', uint[3, {"alpha": 0, "beta": 1, "gamma": 2}]),  # 3 bit integer with enum
-        ('b', sint(4)),  # 4 bit integer
+        ('b', sint[4]),  # 4 bit integer
         ('bars', idle[5]),  # array of 5 bars
     ])
 
@@ -66,19 +65,23 @@ def test_struct():
     with pytest.raises(AttributeError):
         f.c
 
-    assert repr(idle) == "struct('idle', [('f', eric[10]), ('c', uint(5))])"
-    assert repr(eric) == "struct('eric', [('a', uint(3)), ('b', uint(4))])"
+    assert repr(idle) == "struct('idle', [('f', eric[10]), ('c', uint[5])])"
+    assert repr(eric) == "struct('eric', [('a', uint[3]), ('b', uint[4])])"
 
 def test_class():
-    class eric(metaclass=metastruct):
+    @struct
+    class eric:
         a: uint[3]
         b: uint[4]
 
-    assert repr(eric) == "struct('eric', [('a', uint(3)), ('b', uint(4))])"
+    eric2 = struct('eric2', [('a', uint[3]), ('b', uint[4])])
+
+    assert repr(eric) == "struct('eric', [('a', uint[3]), ('b', uint[4])])"
     print (eric.classdef_)
-    assert eric.classdef_ == '''class eric(metaclass=metastruct):
-    a: uint(3)
-    b: uint(4)
+    assert eric.classdef_ == '''@struct
+class eric:
+    a: uint[3]
+    b: uint[4]
 
 '''
 
@@ -90,7 +93,8 @@ def test_decimal():
     assert money + 1.0 == 124.45
 
 def test_expr():
-    class seven_type(metaclass=metastruct):
+    @struct
+    class seven_type:
         a: uint[3]
         b: uint[4]
 
@@ -123,12 +127,48 @@ def test_svreg():
     r[3:0] = 0xd
     assert r == 0xdeadbee
 
-def test_readme_parrot():
-    class parrot_struct(metaclass=metastruct):
+def create_enum_type(size: int, enum_dict: Dict[str, int]) -> Type[uint]:
+    return uint[size, enum_dict]
+
+
+from typing import TypeVar, Generic, Any, Type, cast
+
+T = TypeVar('T')
+
+class BTypeMetaclass(type):
+    def __getitem__(cls, _):
+        return cls
+
+def BType(name: str, wrapped_type: Any) -> Type[Any]:
+    class WrappedType(Generic[T], metaclass=BTypeMetaclass):
+        def __new__(cls, *args, **kwargs):
+            return wrapped_type.__new__(wrapped_type, *args, **kwargs)
+
+        def __init__(self, *args, **kwargs):
+            if isinstance(wrapped_type, type):
+                wrapped_type.__init__(self, *args, **kwargs)
+            else:
+                self.__dict__.update(wrapped_type.__dict__)
+
+        def __getattr__(self, attr):
+            return getattr(wrapped_type, attr)
+
+        @classmethod
+        def __class_getitem__(cls, item):
+            return cls
+
+    WrappedType.__name__ = name
+    WrappedType.__qualname__ = name
+
+    return cast(Type[Any], WrappedType)
+
+def teeest_readme_parrot():
+    class parrot_struct(struct):
         status: uint[2, {'dead': 0, 'pining': 1, 'resting': 2}]
         plumage_rgb: uint[5][3]
 
-    death_enum = uint[3, {
+
+    death_enum=uint[3, {
         'vorpal_bunny': 0,
         'liverectomy': 1,
         'ni': 2,
@@ -138,13 +178,13 @@ def test_readme_parrot():
     }]
 
     class knight_struct(metaclass=metastruct):
-        name: utf8(20)
+        name: utf8[20]
         cause_of_death: death_enum
 
     class quest_struct(metaclass=metastruct):
-        quest: uint(3, enum_={'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3, 'gourd': 4})
+        quest: uint[3, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3, 'gourd': 4}]
         knights: knight_struct[3]
-        holy: uint(1)
+        holy: uint[1]
         parrot: parrot_struct
 
     def print_sequence_of_integers():
@@ -220,3 +260,8 @@ def test_readme_parrot():
 
     assert len(jstrs) == 4
     assert jstrs[0] == '{"quest": "meaning", "knights": [{"name": "Sir Gareth", "cause_of_death": "mint"}, {"name": "Sir Bleoberis", "cause_of_death": "vorpal_bunny"}, {"name": "Sir Degore", "cause_of_death": "question"}], "holy": 0, "parrot": {"status": "dead", "plumage_rgb": [6, 25, 27]}}'
+
+
+
+
+

@@ -10,7 +10,7 @@ https://github.com/kenseehart/bffl
 
 
 import unittest
-from typing import Union, Any, Callable, Sequence, Iterator
+from typing import Union, Any, Callable, Sequence, Iterator, Type, Dict, NewType, Generic, TypeVar, Tuple, List, Optional, get_type_hints
 from pprint import pprint as std_pprint
 import json
 import re
@@ -303,7 +303,7 @@ class field(IntDuck, metaclass=unbound_field):
         except AttributeError as e:
             raise AttributeError(f"'{self.name_}' field has no attribute '{k}'") from e
 
-class btype(type):
+class btype(type) :
     '''Base class for field metatypes'''
     repr_: str
     size_: int
@@ -314,7 +314,6 @@ class btype(type):
         self = super().__new__(cls, name, (), {})
         self.name_ = name
         return self
-
 
     def __call__(self, value:int=0) -> field:
         'Create a new bound interface from this btype'
@@ -347,25 +346,38 @@ class btype(type):
 class uint(btype):
     '''unsigned integer with optional enum'''
 
-    def __init__(self, size:int, enum_:dict=None, name=None, _bracket_init=False):
+    def __init__(self, size:int, enum_:dict=None, name=None):
         super().__init__(name)
+
+        if not isinstance(size, int) or size<=0:
+            raise ValueError(f'Expected positive integer size, got {size}')
+
         self.size_ = size
-        self.repr_ = f"{type(self).__name__}({size})"
+        self.repr_ = f"{type(self).__name__}[{size}]"
         self.enum_ = enum_ or {}
         self.renum_ = {v:k for k,v in self.enum_.items()}
 
-        # Deprecation warning for direct calls
-        if not _bracket_init:
-            warn(
-                f"Direct call notation is deprecated. Use {self.__class__.__name__}[...] instead of {self.__class__.__name__}(...).",
-                DeprecationWarning,
-                stacklevel=2
-            )
 
     @classmethod
     def __class_getitem__(cls, *args):
-        instance = cls(*args, _bracket_init=True)
-        return instance
+        if len(args) == 1 and isinstance(args[0], tuple):
+            args = args[0]
+
+        # if the last argument is a dict, it is an enum
+        if isinstance(args[-1], dict):
+            enum_ = args[-1]
+            args = args[:-1]
+        else:
+            enum_ = None
+
+        # Create the base uint instance
+        result = cls(args[-1], enum_)
+
+        # Apply dimensions in reverse order
+        for dim in reversed(args[:-1]):
+            result = result[dim]
+
+        return result
 
     class mixin_field_(field):
         '''inherited by bound field instance'''
@@ -439,7 +451,7 @@ class fixed(sint):
     '''
 
     def __init__(self, size:int, precision: int, base:int, name=None):
-        super().__init__(name)
+        super().__init__(size, name)
         self.precision_ = precision
         self.base_ = base
         self.divisor_ = base**precision
@@ -485,23 +497,25 @@ class decimal(fixed):
         self.repr_ = f"decimal({size}, {precision})"
 
 
-
 class struct(btype):
-    '''struct metatype
-    struct_name = struct('struct_name', [('field_name', field_type), ...])
-    '''
+    def __init__(self, *args):
+        match args:
+            case (type() as klass,):
+                # Decorator usage
+                name = klass.__name__
+                annotations = getattr(klass, '__annotations__', {})
+                self.fields_ = [(key, value) for key, value in annotations.items()]
 
-    def __init__(self, name, fields):
+            case (str() as name, list() as fields):
+                # Regular instantiation with fields
+                self.fields_ = fields
+
+            case _:
+                raise ValueError(f'{type(self).__name__} requires a name and fields list')
+
         self.name_ = name
-        self.fields_ = fields
-        self.size_ = sum(f.size_ for _,f in self.fields_)
-
-        # use names instead of full expansion where specified
-        field_reprs = [f"('{name}', {f.name_ or f.repr_})" for name, f in self.fields_]
-        fields_repr = '[' + ', '.join(field_reprs) +']'
-
-        self.repr_ = f"struct('{self.name_}', {fields_repr})"
-
+        self.size_ = sum(ft.size_ for _, ft in self.fields_)
+        self.repr_ = f"{type(self).__name__}('{self.name_}', {self.fields_})"
 
     def allocate_(self, name:str='_root', parent:unbound_field=None, offset:int=0) -> unbound_field:
         '''allocate a field recursively'''
@@ -520,7 +534,7 @@ class struct(btype):
     @property
     def classdef_(self):
         'return class definition source code for this btype'
-        lines = [f'class {self.name_}(metaclass=metastruct):']
+        lines = ['@struct', f'class {self.name_}:']
         for name, typ in self.fields_:
             lines.append(f'    {name}: {typ.name_ or typ.repr_}')
 
@@ -561,16 +575,6 @@ class struct(btype):
             else:
                 raise TypeError(f'{k.btype_.__name__} fields do not support {type(k).__name__} indices')
 
-class metastruct(struct):
-    '''metaclass to support class syntax to define struct types
-
-    class struct_name(metaclass=metastruct):
-        field_name: field_type
-        ...
-    '''
-
-    def __init__(self, name:str, bases:tuple, dct:dict=None):
-        super().__init__(name, dct['__annotations__'].items())
 
 
 class array(struct):
