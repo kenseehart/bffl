@@ -2,7 +2,7 @@
 # bffl
 **Bit Fields For Lumberjacks**
 
-![lumberjack](https://github.com/kenseehart/bffl/blob/main/images/bffl800.png)
+![lumberjack](https://raw.githubusercontent.com/kenseehart/bffl/main/images/bffl800.png)
 
 `bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations. Your protocol is expressed concisely using compositions of ints, structs, arrays, and user-defined types.
 
