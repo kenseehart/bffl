@@ -6,7 +6,7 @@
 
 `bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations. Your protocol is expressed concisely using compositions of ints, structs, arrays, and user-defined types.
 
-### Quickstart
+## Quickstart
 
 #### Standard installation:
 
@@ -20,10 +20,16 @@ pip install bffl
 git clone git@github.com:kenseehart/bffl.git
 cd bffl
 pip install -e .
+pytest
 ```
 
+## Reporting Bugs and Suggesting Features
 
-### Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
+If you encounter any bugs or unexpected behavior, please [open an issue](https://github.com/kenseehart/bffl/issues/new?template=bug_report.md).
+
+If you have a suggestion to make `bffl` even more useful, please [open a feature request](https://github.com/kenseehart/bffl/issues/new?template=feature_request.md).
+
+## Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
 
 While `bffl` and `ctypes` both handle binary data in Python, their primary purposes differ. `ctypes` maps to C structs, whereas `bffl` maps to bit vectors.
 
@@ -48,13 +54,13 @@ While `bffl` and `ctypes` both handle binary data in Python, their primary purpo
   - Ideal for IO-bound tasks and memory transfers, where exact bit-level management is crucial.
   - Memory mapping is portable (independent of hardware architecture)
 
-### Comparison to Bitfields in C++
+## Comparison to Bitfields in C++
 
 C++ typically controls bit allocation for optimal performance, respecting byte or word boundaries, which can hinder precise bit-level control. `bffl` offers explicit control over bit allocation, with no implicit padding. This is crucial for protocol implementations and verilog interfaces, where predictable bitwise allocation is required.
 
 In `bffl`, a struct with a 5-bit integer and a 13-bit integer is exactly 18 bits, and an array of 5 such structs is 90 bits. Python's `int` type supports unbounded bit fields, allowing flexible manipulation without byte misalignment issues.
 
-### Ease of Use
+## Ease of Use
 
 ```python
 @struct
@@ -81,7 +87,7 @@ for jstr in get_dead_parrot_quests(sequence_of_integers_from_somewhere()):
     print(jstr)
 ```
 
-### Interoperability
+## Special attributes
 
 Fields in `bffl` have read/write properties exposing data:
 
@@ -91,7 +97,11 @@ Fields in `bffl` have read/write properties exposing data:
 | `v_`      | Data value as basic types (int, float, str, list, dict) |
 | `json_`   | Data value as a JSON string |
 
-### Performance
+#### Trailing Underscore Convention
+
+Non-field attributes in `bffl` are marked with a trailing underscore to distinguish them from fields. This allows full use of the field namespace.
+
+## Performance
 
 `bffl` achieves performance by performing symbolic processing during interface allocation, reducing runtime overhead. Bound field computations typically involve simple `shift-and` operations.
 
@@ -99,12 +109,12 @@ Fields in `bffl` have read/write properties exposing data:
 @struct
 class MyRegister:
     rtype: uint(2, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
-    stuff: uint(3)
-    junk: uint(1)
+    stuff: uint[3]
+    junk: uint[1]
 
 @struct
 class MyProtocol:
-    header: uint(5)
+    header: uint[5]
     a: MyRegister
     b: MyRegister
     c: MyRegister
@@ -118,22 +128,20 @@ def look_for_fives(datastream: Sequence[int]):
             handle_5()
 ```
 
-### Trailing Underscore Convention
 
-Fields in `bffl` are marked with a trailing underscore to distinguish them from non-field attributes. This allows full use of the field namespace.
 
 ### Metatypes, Field Types, and Fields
 
 `bffl` uses metatypes to define complex datatypes. For example, `uint(5)` defines a 5-bit unsigned integer field type. Fields are instantiated and assigned values via the `v_` or `n_` attributes.
 
-### Struct Syntax
+## Struct Syntax
 
-#### Inline Syntax
-```python
-struct_name = struct('struct_name', [('field_name', field_type), ...])
-```
+There are two ways to define a new struct type:
 
 #### Class Syntax
+
+*This is the typical was to declare a new struct type.*
+
 ```python
 @struct
 class struct_name:
@@ -141,11 +149,21 @@ class struct_name:
     ...
 ```
 
-### System Verilog Semantics (optional)
+#### Inline Syntax
+
+*This syntax can be useful for programatic generation of new types. This mirrors the repr of a struct instance.*
+
+```python
+struct_name = struct('struct_name', [('field_name', field_type), ...])
+```
+
+## System Verilog Semantics (optional)
 
 Normally, `bffl` uses pythonic index semantics. However, if you are working heavily with System Verilog, you might find it more intuitive to use System Verilog slice semantics.vaa
 
 If a field is of type `svreg`, ranges are `[high:low]` and are inclusive of both high and low indexes.
+
+Please note that while `bffl` is structurally ideal for this kind of thing, this feature set for System Verilog needs more work. If you are intending to use `bffl` for a verilog application, please contact us so we know it's a priority. [open a feature request](https://github.com/kenseehart/bffl/issues/new?template=feature_request.md)
 
 ```python
 r = svreg(28)(0xabadbee)
