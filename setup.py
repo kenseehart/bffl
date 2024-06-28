@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name='bffl',
-    version='0.3.0',
+    version='0.3.1',
     author='Ken Seehart',
     author_email='ken@agi.green',
     description='A framework for structured bitfield processing',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/yourusername/bffl',
+    url='https://github.com/kenseehart/bffl',
     packages=find_packages(),
     classifiers=[
         'Programming Language :: Python :: 3',
