@@ -39,12 +39,12 @@ Your protocol is expressed concisely using compositions of types.
 - floating point in any format (you can define custom floats)
 - fixed point
 - decimal
-- *future:* quantization
+- *`future:`* quantization
 
 #### compound types
 - struct
 - array
-- *future:* union
+- *`future:`* union
 
 #### custom types
 
