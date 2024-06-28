@@ -4,7 +4,7 @@
 
 ![lumberjack](https://raw.githubusercontent.com/kenseehart/bffl/main/images/bffl800.png)
 
-`bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations. Your protocol is expressed concisely using compositions of ints, structs, arrays, and user-defined types.
+`bffl` is a high-performance bit field protocol framework for working with packed binary data. It's ideal for scenarios requiring precise control of bit arrangements, such as verilog interfaces and arbitrary bitfield manipulations.
 
 ## Quickstart
 
@@ -29,9 +29,32 @@ If you encounter any bugs or unexpected behavior, please [open an issue](https:/
 
 If you have a suggestion to make `bffl` even more useful, please [open a feature request](https://github.com/kenseehart/bffl/issues/new?template=feature_request.md).
 
+## Expressive type system
+
+Your protocol is expressed concisely using compositions of types.
+ 
+#### atomic types
+- signed/unsigned ints of any size
+- enumerations
+- floating point in any format (you can define custom floats)
+- fixed point
+- decimal
+- *future:* quantization
+
+#### compound types
+- struct
+- array
+- *future:* union
+
+#### custom types
+
+The typing system is highly customizable. You define evaluation, packing logic, and any other behaviors you need.
+
 ## Comparison to [ctypes](https://docs.python.org/3/library/ctypes.html)
 
 While `bffl` and `ctypes` both handle binary data in Python, their primary purposes differ. `ctypes` maps to C structs, whereas `bffl` maps to bit vectors.
+Note that `ctypes` supports C++ style bitfields, which are suitable for some use cases, but due to characteristics of C++ bitfields, `ctypes` cannot gurantee predictable behavior (because packing logic depends on hardware architecture).
+If your use case doesn't require binary compatibility, this consideration might not matter.
 
 | **Tool** | **Model** | **Primary Purpose** | **Implementation** |
 |----------|-----------|---------------------|--------------------|
