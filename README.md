@@ -130,27 +130,52 @@ Non-field attributes in `bffl` are marked with a trailing underscore to distingu
 
 ```python
 @struct
-class MyRegister:
-    rtype: uint(2, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
-    stuff: uint[3]
-    junk: uint[1]
+class Quest:
+    qtype: uint(2, {'grail': 0, 'shrubbery': 1, 'meaning': 2, 'larch': 3})
+    count: uint[3]
+    alive: uint[1]
 
 @struct
 class MyProtocol:
     header: uint[5]
-    a: MyRegister
-    b: MyRegister
-    c: MyRegister
+    a: Quest
+    b: Quest
+    c: Quest
 
 def look_for_fives(datastream: Sequence[int]):
     buffer = MyProtocol()
-    bstuff = buffer.b.stuff
+    bcount = buffer.b.count # sybolic overhead outside the loop
     for n in datastream:
         buffer.n_ = n
-        if bstuff == 5:
-            handle_5()
+        if bcount == 5: # low overhead (simple shift-and operation)
+            do_something()
 ```
 
+Expression jit converts python expressions into a low level C expressions.
+
+*`future`* This will support high performance integration with `pytorch`, `numpy`, `bcolz`, etc.
+
+```python
+    @struct
+    class seven_type:
+        a: uint[3]
+        b: uint[4]
+
+    seven = seven_type()
+
+    assert seven.a.expr_() == '(n >> 4 & 0x7)'
+    assert seven.b.expr_() == '(n & 0xf)'
+
+    ab = seven['a * b']
+
+    seven.a = 5
+    seven.b = 11
+
+    assert seven.a == 5
+    assert ab == 55
+
+    assert ab.expr_() == '(n >> 4 & 0x7) * (n & 0xf)'
+```
 
 
 ### Metatypes, Field Types, and Fields
