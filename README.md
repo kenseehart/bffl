@@ -37,8 +37,8 @@ Your protocol is expressed concisely using compositions of types.
 - signed/unsigned ints of any size
 - enumerations
 - floating point in any format (you can define custom floats)
-- fixed point
-- decimal
+- binary fixed point
+- decimal fixed point (or fixed point in any base)
 - *`future:`* quantization
 
 #### compound types
@@ -118,7 +118,7 @@ Fields in `bffl` have read/write properties exposing data:
 |-----------|-------------|
 | `n_`      | Raw bits as an int (unbounded size) |
 | `v_`      | Data value as basic types (int, float, str, list, dict) |
-| `json_`   | Data value as a JSON string |
+| `json_`   | Data value rendered as a JSON string |
 
 #### Trailing Underscore Convention
 
