@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bffl',
-    version='0.2.0',
+    version='0.3.0',
     author='Ken Seehart',
     author_email='ken@agi.green',
     description='A framework for structured bitfield processing',
