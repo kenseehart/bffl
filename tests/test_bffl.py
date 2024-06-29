@@ -112,7 +112,7 @@ def test_expr():
     assert ab == 55
 
     assert ab.expr_() == '(n >> 4 & 0x7) * (n & 0xf)'
-    assert ab.expr_() == '(n >> 4 & 0x7) * (n & 0xf)'
+ 
 
 def test_unicode():
     s = utf8(10)()
