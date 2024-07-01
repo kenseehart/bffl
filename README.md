@@ -224,7 +224,7 @@ assert r == 0xdeadbee
 
 ## Related Projects
 
-Here is a comparison grid of various bitfield-related libraries with verified licenses:
+Here is a comparison grid of various bitfield-related libraries:
 
 | **Library** | **Description** | **Primary Purpose** |
 |-------------|-----------------|---------------------|
