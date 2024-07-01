@@ -228,6 +228,7 @@ Here is a comparison grid of various bitfield-related libraries:
 
 | **Library** | **Description** | **Primary Purpose** |
 |-------------|-----------------|---------------------|
+| **[btypes](https://github.com/kenseehart/btypes)** | Deprecated version of `bffl` (this library) | pypi name conflict with unrelated project motivated name change |
 | **[bitvector](https://github.com/JnyJny/bitvector)** | Bit vector implementation with BitField descriptor for sub-byte bit addressing | Address and manipulate bits in integer words |
 | **[bfield](https://pypi.org/project/bfield)** | Convenient bit fields for int subclasses | Define and manipulate bitfields |
 | **[ctypes-bitfield](https://pypi.org/project/ctypes-bitfield/)** | Bitfields with ctypes integration | Interface with C/C++ bitfields |
